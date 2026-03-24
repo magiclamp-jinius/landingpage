@@ -64,10 +64,11 @@ const plans = [
 ];
 
 export default function PricingSection() {
-  const [survey, setSurvey] = useState<{ isOpen: boolean; href: string; name: string }>({
+  const [survey, setSurvey] = useState<{ isOpen: boolean; href: string; name: string; price: string }>({
     isOpen: false,
     href: "",
     name: "",
+    price: "",
   });
 
   return (
@@ -150,7 +151,7 @@ export default function PricingSection() {
                 className="w-full gap-2"
                 size="lg"
                 variant={plan.highlight ? "accent" : "brandOutline"}
-                onClick={() => setSurvey({ isOpen: true, href: plan.href, name: plan.name })}
+                onClick={() => setSurvey({ isOpen: true, href: plan.href, name: plan.name, price: plan.price })}
               >
                 지금 구매하기 <MoveRight className="w-4 h-4" />
               </Button>
@@ -164,6 +165,7 @@ export default function PricingSection() {
         onClose={() => setSurvey({ ...survey, isOpen: false })}
         checkoutUrl={survey.href}
         packageName={survey.name}
+        price={survey.price}
       />
     </section>
   );

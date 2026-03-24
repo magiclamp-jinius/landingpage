@@ -39,9 +39,10 @@ interface SurveyModalProps {
   onClose: () => void;
   checkoutUrl: string;
   packageName: string;
+  price: string;
 }
 
-export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName }: SurveyModalProps) {
+export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl, packageName, price }: SurveyModalProps) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -56,6 +57,7 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName 
   const [painOpen, setPainOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitted, setSubmitted] = useState(false);
 
   const togglePainPoint = (point: string) => {
     setForm((prev) => ({
@@ -103,7 +105,8 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName 
       }]);
     }
 
-    window.location.href = checkoutUrl;
+    setSubmitted(true);
+    setLoading(false);
   };
 
   const inputClass = "w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#77CCF7]";
@@ -126,6 +129,68 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName 
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl"
           >
+            {/* 제출 완료 - 계좌이체 안내 */}
+            {submitted ? (
+              <div className="p-8">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl">✓</span>
+                  </div>
+                  <h2 className="text-2xl font-extrabold text-[#0D174B] mb-2">정보 입력 완료!</h2>
+                  <p className="text-gray-500 text-sm">아래 계좌로 입금해주시면 확인 후 메일로 발송해드립니다.</p>
+                </div>
+
+                {/* 계좌 정보 */}
+                <div className="bg-[#0D174B] rounded-2xl p-6 mb-4 text-white">
+                  <p className="text-[#77CCF7] text-xs font-bold uppercase tracking-widest mb-4">입금 계좌 정보</p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">은행</span>
+                      <span className="font-bold">IBK 기업은행</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">계좌번호</span>
+                      <span className="font-bold tracking-wider">606-064874-01-013</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-white/60 text-sm">예금주</span>
+                      <span className="font-bold">주식회사 지니어스컴퍼니</span>
+                    </div>
+                    <div className="border-t border-white/20 pt-3 flex justify-between">
+                      <span className="text-white/60 text-sm">입금 금액</span>
+                      <span className="font-extrabold text-[#77CCF7] text-lg">₩{price}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 안내 메시지 */}
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                  <p className="text-yellow-800 text-sm font-semibold mb-1">입금 후 꼭 해주세요!</p>
+                  <p className="text-yellow-700 text-sm">
+                    카카오톡 채널에서 <strong>구매 상품명</strong>과 <strong>입금자명</strong>을 보내주세요.
+                    입금 확인 후 등록하신 이메일로 키트를 발송해드립니다.
+                  </p>
+                </div>
+
+                {/* 카카오 채널 버튼 */}
+                <a
+                  href="http://pf.kakao.com/_xmGdTn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full bg-[#FEE500] text-[#191919] font-bold py-4 rounded-xl text-center text-base hover:bg-[#FEE500]/80 transition-colors mb-3"
+                >
+                  💬 카카오톡 채널로 입금 알리기
+                </a>
+
+                <button
+                  onClick={onClose}
+                  className="w-full text-gray-400 text-sm py-2 hover:text-gray-600"
+                >
+                  닫기
+                </button>
+              </div>
+            ) : (
+            <>
             {/* Header */}
             <div className="sticky top-0 bg-[#0D174B] rounded-t-2xl px-6 py-5 flex justify-between items-start">
               <div>
@@ -135,7 +200,7 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName 
                 </h2>
                 <p className="text-white/60 text-xs mt-1">
                   더 나은 서비스 제공을 위해 간단한 정보를 입력해주세요.
-                  <br />입력 후 결제 페이지로 이동합니다.
+                  <br />입력 후 계좌이체 안내를 드립니다.
                 </p>
               </div>
               <button onClick={onClose} className="text-white/60 hover:text-white mt-1 shrink-0">
@@ -316,13 +381,15 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl, packageName 
                 className="w-full gap-2"
                 disabled={loading}
               >
-                {loading ? "저장 중..." : "확인 후 결제하기 →"}
+                {loading ? "저장 중..." : "확인 후 계좌 정보 받기 →"}
               </Button>
 
               <p className="text-xs text-gray-400 text-center">
-                확인 버튼을 누르면 Polar 결제 페이지로 이동합니다.
+                확인 버튼을 누르면 계좌이체 안내를 드립니다.
               </p>
             </form>
+            </>
+            )}
           </motion.div>
         </motion.div>
       )}
