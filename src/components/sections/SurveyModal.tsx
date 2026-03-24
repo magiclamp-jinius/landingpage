@@ -4,7 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 
 const INDUSTRIES = [
   "제조업",
@@ -91,19 +90,20 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
       ? [...form.painPoints.filter((p) => p !== "기타"), form.painPointOther]
       : form.painPoints;
 
-    if (supabase) {
-      await supabase.from("survey_responses").insert([{
+    await fetch("/api/survey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
         name: form.name,
         phone: form.phone,
         email: form.email,
         role: form.role,
         industry: industryFinal,
-        pain_points: painFinal.join(", "),
-        package_name: packageName,
-        privacy_consent: form.privacyConsent,
-        created_at: new Date().toISOString(),
-      }]);
-    }
+        painPoints: painFinal.join(", "),
+        packageName,
+        price,
+      }),
+    });
 
     setSubmitted(true);
     setLoading(false);
