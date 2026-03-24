@@ -47,12 +47,13 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
     phone: "",
     email: "",
     role: "" as "대표자" | "실무자" | "",
-    industry: "",
+    industries: [] as string[],
     industryOther: "",
     painPoints: [] as string[],
     painPointOther: "",
     privacyConsent: false,
   });
+  const [industryOpen, setIndustryOpen] = useState(false);
   const [painOpen, setPainOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,11 +74,20 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
     if (!form.phone.trim()) e.phone = "전화번호를 입력해주세요";
     if (!form.email.trim()) e.email = "이메일을 입력해주세요";
     if (!form.role) e.role = "직책을 선택해주세요";
-    if (!form.industry) e.industry = "업종을 선택해주세요";
+    if (form.industries.length === 0) e.industries = "업종을 선택해주세요";
     if (form.painPoints.length === 0) e.painPoints = "최소 1개 이상 선택해주세요";
     if (!form.privacyConsent) e.privacyConsent = "개인정보 수집에 동의해주세요";
     setErrors(e);
     return Object.keys(e).length === 0;
+  };
+
+  const toggleIndustry = (item: string) => {
+    setForm((prev) => ({
+      ...prev,
+      industries: prev.industries.includes(item)
+        ? prev.industries.filter((i) => i !== item)
+        : [...prev.industries, item],
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,7 +95,9 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
     if (!validate()) return;
     setLoading(true);
 
-    const industryFinal = form.industry === "기타" ? form.industryOther : form.industry;
+    const industriesFinal = form.industries.includes("기타")
+      ? [...form.industries.filter((i) => i !== "기타"), form.industryOther].filter(Boolean)
+      : form.industries;
     const painFinal = form.painPoints.includes("기타")
       ? [...form.painPoints.filter((p) => p !== "기타"), form.painPointOther]
       : form.painPoints;
@@ -98,7 +110,7 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
         phone: form.phone,
         email: form.email,
         role: form.role,
-        industry: industryFinal,
+        industry: industriesFinal,
         painPoints: painFinal.join(", "),
         packageName,
         price,
@@ -273,17 +285,46 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
               {/* 업종 */}
               <div>
                 <label className={labelClass}>5. 귀사의 업종 <span className="text-red-400">*</span></label>
-                <select
-                  value={form.industry}
-                  onChange={(e) => setForm({ ...form, industry: e.target.value })}
-                  className={inputClass}
-                >
-                  <option value="">업종을 선택해주세요</option>
-                  {INDUSTRIES.map((i) => (
-                    <option key={i} value={i}>{i}</option>
-                  ))}
-                </select>
-                {form.industry === "기타" && (
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setIndustryOpen(!industryOpen)}
+                    className="w-full flex justify-between items-center px-4 py-3 text-sm text-left hover:bg-gray-50"
+                  >
+                    <span className={form.industries.length > 0 ? "text-[#0D174B] font-medium" : "text-gray-400"}>
+                      {form.industries.length > 0 ? `${form.industries.length}개 선택됨` : "해당하는 업종을 모두 선택해주세요"}
+                    </span>
+                    {industryOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+                  </button>
+                  <AnimatePresence>
+                    {industryOpen && (
+                      <motion.div
+                        initial={{ height: 0 }}
+                        animate={{ height: "auto" }}
+                        exit={{ height: 0 }}
+                        className="overflow-hidden border-t border-gray-100"
+                      >
+                        <div className="max-h-52 overflow-y-auto">
+                          {INDUSTRIES.map((item) => (
+                            <label
+                              key={item}
+                              className="flex items-start gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={form.industries.includes(item)}
+                                onChange={() => toggleIndustry(item)}
+                                className="mt-0.5 accent-[#0D174B]"
+                              />
+                              <span className="text-sm text-gray-700">{item}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                {form.industries.includes("기타") && (
                   <input
                     type="text"
                     placeholder="업종을 직접 입력해주세요"
@@ -292,7 +333,7 @@ export default function SurveyModal({ isOpen, onClose, checkoutUrl: _checkoutUrl
                     className={`${inputClass} mt-2`}
                   />
                 )}
-                {errors.industry && <p className={errorClass}>{errors.industry}</p>}
+                {errors.industries && <p className={errorClass}>{errors.industries}</p>}
               </div>
 
               {/* 재무회계 어려운 부분 */}
