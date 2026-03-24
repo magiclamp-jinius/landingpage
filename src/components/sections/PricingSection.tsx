@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Check, MoveRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SurveyModal from "@/components/sections/SurveyModal";
 
 // Polar.sh 결제 링크
 const POLAR_LINKS = {
@@ -62,6 +64,12 @@ const plans = [
 ];
 
 export default function PricingSection() {
+  const [survey, setSurvey] = useState<{ isOpen: boolean; href: string; name: string }>({
+    isOpen: false,
+    href: "",
+    name: "",
+  });
+
   return (
     <section id="pricing" className="bg-gray-50 py-20 md:py-28">
       <div className="container mx-auto px-4">
@@ -107,7 +115,7 @@ export default function PricingSection() {
               )}
 
               <div className="mb-6">
-                <p className={`text-xs font-bold uppercase tracking-widest mb-2 ${plan.highlight ? "text-[#77CCF7]" : "text-[#77CCF7]"}`}>
+                <p className="text-xs font-bold uppercase tracking-widest mb-2 text-[#77CCF7]">
                   {plan.target}
                 </p>
                 <h3 className={`text-xl font-extrabold mb-4 ${plan.highlight ? "text-white" : "text-[#0D174B]"}`}>
@@ -138,19 +146,25 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <a href={plan.href} target="_blank" rel="noopener noreferrer">
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  variant={plan.highlight ? "accent" : "brandOutline"}
-                >
-                  지금 구매하기 <MoveRight className="w-4 h-4" />
-                </Button>
-              </a>
+              <Button
+                className="w-full gap-2"
+                size="lg"
+                variant={plan.highlight ? "accent" : "brandOutline"}
+                onClick={() => setSurvey({ isOpen: true, href: plan.href, name: plan.name })}
+              >
+                지금 구매하기 <MoveRight className="w-4 h-4" />
+              </Button>
             </motion.div>
           ))}
         </div>
       </div>
+
+      <SurveyModal
+        isOpen={survey.isOpen}
+        onClose={() => setSurvey({ ...survey, isOpen: false })}
+        checkoutUrl={survey.href}
+        packageName={survey.name}
+      />
     </section>
   );
 }
