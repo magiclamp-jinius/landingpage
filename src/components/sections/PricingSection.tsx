@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 
 // Polar.sh 결제 링크
 const POLAR_LINKS = {
-  basic: "https://buy.polar.sh/56db1999-2693-46e8-85bb-33c9685f2c04",
-  standard: "https://buy.polar.sh/a1511e03-cdeb-4edf-bed4-2a3e7fabf4fb",
-  premium: "https://buy.polar.sh/45a919f4-f3a5-4435-93e9-e113a2bf908d",
+  basic: "https://buy.polar.sh/polar_cl_fm1creSQ3Xpn8Z7mz1LuMGGQpb3anEhX4bowW1LqcN0",
+  standard: "https://buy.polar.sh/polar_cl_7B5CHqzV0oBSFdJIe3zFYJTInPLw19wxtVmCz3rlOLA",
+  premium: "https://buy.polar.sh/polar_cl_0iObOLduGskBtFbOCXbcoqgj6APFnbbF0tRD71avqvo",
 };
 
 const plans = [
