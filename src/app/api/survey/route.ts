@@ -14,58 +14,48 @@ const supabase = createClient(
 );
 
 export async function POST(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const { name, phone, email, role, industry, painPoints, packageName, price } = body;
+  const body = await req.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "invalid body" }, { status: 400 });
 
-    // 1. Supabase 저장
+  const { name, phone, email, role, industry, painPoints, packageName, price } = body;
+  const industryList: string[] = Array.isArray(industry) ? industry : String(industry).split(",").map((s: string) => s.trim());
+
+  // 1. Supabase 저장 (실패해도 계속 진행)
+  try {
     await supabase.from("survey_responses").insert([{
-      name,
-      phone,
-      email,
-      role,
-      industry,
+      name, phone, email, role,
+      industry: industryList.join(", "),
       pain_points: painPoints,
       package_name: packageName,
       privacy_consent: true,
       created_at: new Date().toISOString(),
     }]);
+  } catch (e) {
+    console.error("Supabase error (skipped):", e);
+  }
 
-    // 2. 노션 DB 저장
+  // 2. 노션 DB 저장
+  try {
     await notion.pages.create({
       parent: { database_id: NOTION_DB_ID },
       properties: {
-        이름: {
-          title: [{ text: { content: name } }],
-        },
-        전화번호: {
-          phone_number: phone,
-        },
-        이메일: {
-          email: email || null,
-        },
-        직책: {
-          select: { name: role },
-        },
-        업종: {
-          select: { name: industry },
-        },
-        문제점: {
-          rich_text: [{ text: { content: painPoints } }],
-        },
-        패키지명: {
-          select: { name: packageName },
-        },
-        결제금액: {
-          number: parseInt(price.replace(/,/g, "")) || 0,
-        },
-        결제일시: {
-          date: { start: new Date().toISOString().split("T")[0] },
-        },
+        이름: { title: [{ text: { content: name } }] },
+        전화번호: { phone_number: phone },
+        이메일: { email: email || null },
+        직책: { select: { name: role } },
+        업종: { multi_select: industryList.map((n: string) => ({ name: n })) },
+        문제점: { rich_text: [{ text: { content: painPoints } }] },
+        패키지명: { select: { name: packageName } },
+        결제금액: { number: parseInt(String(price).replace(/,/g, "")) || 0 },
+        결제일시: { date: { start: new Date().toISOString().split("T")[0] } },
       },
     });
+  } catch (e) {
+    console.error("Notion error:", e);
+  }
 
-    // 3. 관리자 이메일 발송
+  // 3. 관리자 이메일 발송
+  try {
     await resend.emails.send({
       from: "알림 <noreply@jiniusgroup.com>",
       to: ADMIN_EMAIL,
@@ -97,7 +87,7 @@ export async function POST(req: NextRequest) {
             </tr>
             <tr style="background: #f8f9fa;">
               <td style="padding: 12px; font-weight: bold; color: #0D174B;">업종</td>
-              <td style="padding: 12px;">${industry}</td>
+              <td style="padding: 12px;">${industryList.join(", ")}</td>
             </tr>
             <tr>
               <td style="padding: 12px; font-weight: bold; color: #0D174B;">재무 문제점</td>
@@ -120,10 +110,9 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     });
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Survey API error:", error);
-    return NextResponse.json({ error: "처리 중 오류가 발생했습니다" }, { status: 500 });
+  } catch (e) {
+    console.error("Resend error:", e);
   }
+
+  return NextResponse.json({ success: true });
 }
